@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                          http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd
+                               http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+">
+
+    <context:component-scan base-package="daoimpl"></context:component-scan>
+    <context:component-scan base-package="util"></context:component-scan>
+
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="classpath:prop.properties"></property>
+        <property name="localOverride" value="true"></property>
+    </bean>
+
+    <bean id="datasource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="url" value="${jdbc.oracle.url}"></property>
+        <property name="username" value="${jdbc.oracle.username}"></property>
+        <property name="password" value="${jdbc.oracle.password}"></property>
+        <property name="initialSize" value="10"></property>
+        <property name="maxActive" value="50"></property>
+        <property name="minIdle" value="5"></property>
+        <property name="maxWait" value="60000"></property>
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+        <constructor-arg ref="datasource"></constructor-arg>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="datasource">
+        </property></bean>
+
+    <tx:advice id="id" transaction-manager="transactionManager">
+        <tx:attributes>
+
+            <tx:method name="insert*" rollback-for="Exception"/>
+            <tx:method name="update*" rollback-for="Exception"/>
+            <tx:method name="delete*" rollback-for="Exception"/>
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 通过aop切入事务 -->
+    <aop:config>
+        <aop:pointcut expression="execution(* daoimpl.*.*(..))" id="pc"/>
+        <aop:advisor advice-ref="id" pointcut-ref="pc"/>
+    </aop:config>
+
+</beans>
